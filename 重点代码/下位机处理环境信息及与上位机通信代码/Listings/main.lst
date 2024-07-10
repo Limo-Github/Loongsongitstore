@@ -1,0 +1,119 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              07/09/2024 06:29:40 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main
+                    -.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <stdio.h>
+   2          #include <REGX52.H>
+   3          #include "lcd1602.h"
+   4          #include "DHT11.h"
+   5          #include "BH1750.h"
+   6          #include "delay.h"
+   7          #include "intrins.h"
+   8          
+   9          unsigned char shidu[4];
+  10          unsigned char wendu[4];
+  11          int i;
+  12          
+  13          unsigned char   ge,shi,bai,qian,wan;       //显示变量
+  14          int    dis_data;      
+  15          void UartInit(void)   //9600bps@11.0592MHz
+  16          {
+  17   1        SM0 = 0;
+  18   1        SM1 = 1;
+  19   1        REN = 1;
+  20   1        TR1 = 1;
+  21   1        TMOD |= 0x20;
+  22   1        TH1=0xfd;
+  23   1        TL1=0xfd;
+  24   1         ES=1;           //????????
+  25   1        EA=1;
+  26   1      
+  27   1                    
+  28   1      }
+  29           
+  30          
+  31          void UART_SendByte(unsigned char Byte)
+  32          {
+  33   1        SBUF=Byte;   //?SBUF????
+  34   1        while(!TI);//if(TI==1) {TI=0;}??????????TI?1,????,??????0
+  35   1        TI=0;
+  36   1      }
+  37          void uart_send_string(char *str)
+  38          {
+  39   1        while(*str!='\0')
+  40   1        {
+  41   2          UART_SendByte(*str);  
+  42   2          str++;
+  43   2        }
+  44   1      }//变量
+  45          
+  46          void main()
+  47          {
+  48   1        float temp;
+  49   1      
+  50   1        lcd_init();
+  51   1        BH1750_init();       
+  52   1        lcd_showstring(2,1,"Light:"); 
+  53   1        lcd_showstring(1, 1, "Hum:");
+  54   1        lcd_showstring(1, 8, "Tem:");
+C51 COMPILER V9.59.0.0   MAIN                                                              07/09/2024 06:29:40 PAGE 2   
+
+  55   1        lcd_showstring(1,7,"%");      
+  56   1        lcd_showstring(1,15,"C"); 
+  57   1       // lcd_showstring(2,12,"lx"); 
+  58   1      
+  59   1        while(1)
+  60   1        {
+  61   2            DHT11_receive();
+  62   2           UartInit();
+  63   2          
+  64   2        
+  65   2            
+  66   2            for(i=0;i<3;i++) 
+  67   2               shidu[i]= rec_dat[i]; 
+  68   2            for(i=4;i<7;i++)
+  69   2               wendu[i-4] = rec_dat[i];
+  70   2            
+  71   2            lcd_showstring(1,5,shidu);
+  72   2            lcd_showstring(1,12,wendu);
+  73   2          
+  74   2        
+  75   2           temp = Get_Sunlight_Value();
+  76   2           /* Single_Write_BH1750(0x01);   //上电
+  77   2            Single_Write_BH1750(0x10);    //高频率连续测量
+  78   2            delay(180);                 //选择模式需要延时，此处为最大值
+  79   2            Multiple_read_BH1750();         //读取数据存入BUF
+  80   2            dis_data = BUF[0];
+  81   2            dis_data=(dis_data<<8)+Multiple_read_BH1750();  //数据合成
+  82   2            temp=(int)dis_data;   //计算数据 */
+  83   2            uart_send_string(wendu);   
+  84   2            uart_send_string(shidu);  
+  85   2            uart_send_string(BUF);
+  86   2            
+  87   2            lcd_shownum(2,7,temp,5);
+  88   2      
+  89   2      }
+  90   1        }
+  91          
+  92          
+  93          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    284    ----
+   CONSTANT SIZE    =     21    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     17       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,163 @@
+C51 COMPILER V9.59.0.0   LCD1602                                                           07/09/2024 06:29:40 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE LCD1602
+OBJECT MODULE PLACED IN .\Objects\lcd1602.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE lcd1602.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\l
+                    -cd1602.lst) TABS(2) OBJECT(.\Objects\lcd1602.obj)
+
+line level    source
+
+   1          #include <REGX52.H>
+   2          
+   3          sbit RS=P0^7;
+   4          sbit RW=P0^6;
+   5          sbit E=P0^5;
+   6          #define lcd_DatePort P2
+   7          
+   8          void lcd_delay(void)  //1ms
+   9          {
+  10   1        unsigned char data i, j;
+  11   1      
+  12   1        i = 2;
+  13   1        j = 239;
+  14   1        do
+  15   1        {
+  16   2          while (--j);
+  17   2        } while (--i);
+  18   1      }
+  19          
+  20          void lcd_writecmd(unsigned char Command)  //写指令
+  21          {
+  22   1        RS=0;
+  23   1        RW=0;
+  24   1        lcd_DatePort=Command;
+  25   1        E=1;
+  26   1        lcd_delay();
+  27   1        E=0;
+  28   1        lcd_delay();
+  29   1      }
+  30          
+  31          void lcd_writedat(unsigned char Date)  //写数据
+  32          {
+  33   1        RS=1;
+  34   1        RW=0;
+  35   1        lcd_DatePort=Date;
+  36   1        E=1;
+  37   1        lcd_delay();
+  38   1        E=0;
+  39   1        lcd_delay();
+  40   1      }
+  41          
+  42          void lcd_init() //lcd1602初始化
+  43          {
+  44   1        lcd_writecmd(0x38);
+  45   1        lcd_writecmd(0x0C);
+  46   1        lcd_writecmd(0x06);
+  47   1        lcd_writecmd(0x01);
+  48   1      }
+  49          
+  50          int lcd_pow(int X,int Y)  //X的Y次方
+  51          {
+  52   1        unsigned char i;
+  53   1        int result=1;
+  54   1        for(i=0;i<Y;i++)
+C51 COMPILER V9.59.0.0   LCD1602                                                           07/09/2024 06:29:40 PAGE 2   
+
+  55   1          result*=X;
+  56   1        return result;
+  57   1      }
+  58          
+  59          void lcd_setcursor(unsigned char Line,unsigned char Column) //设置光标位置
+  60          {
+  61   1        if(Line==1)
+  62   1          lcd_writecmd(0x80|(Column-1));
+  63   1        else
+  64   1          lcd_writecmd(0x80|(Column-1)+0x40);
+  65   1      }
+  66          
+  67          void lcd_showchar(unsigned char Line,unsigned char Column,unsigned char Char)
+  68          {
+  69   1        lcd_setcursor(Line,Column);
+  70   1        lcd_writedat(Char);
+  71   1      }
+  72          
+  73          void lcd_showstring(unsigned char Line,unsigned char Column,unsigned char String[])   //显示字符串
+  74          {
+  75   1        unsigned char i;
+  76   1        lcd_setcursor(Line,Column);
+  77   1        for(i=0;String[i]!='\0';i++)
+  78   1          lcd_writedat(String[i]);
+  79   1      }
+  80          
+  81          void lcd_shownum(unsigned char Line,unsigned char Column,int Number,unsigned int Length)
+  82          {
+  83   1        unsigned char i;
+  84   1        lcd_setcursor(Line,Column);
+  85   1        for(i=Length;i>0;i--)
+  86   1          lcd_writedat('0'+Number/lcd_pow(10,i-1)%10);  //加0即加了0x30，因为实际数字和ASC码表的数�
+             -��差0x30
+  87   1      }
+  88          
+  89          void lcd_showsignednum(unsigned char Line,unsigned char Column,int Number,unsigned int Length)
+  90          {
+  91   1        unsigned char i;
+  92   1        unsigned int Number1;
+  93   1        lcd_setcursor(Line,Column);
+  94   1        if(Number>=0)
+  95   1        {
+  96   2          lcd_writedat('+');
+  97   2          Number1=Number;
+  98   2        }
+  99   1        else
+ 100   1        {
+ 101   2          lcd_writedat('-');
+ 102   2          Number1=-Number;
+ 103   2        }
+ 104   1        for(i=Length;i>0;i--)
+ 105   1        lcd_writedat('0'+Number1/lcd_pow(10,i-1)%10); 
+ 106   1        //加0即加了0x30，因为实际数字和ASC码表的数字差0x30,即将想要显示的数字在表中
+             -找到对应的位置
+ 107   1      }
+ 108          
+ 109          void lcd_showhexnum(unsigned char Line,unsigned char Column,unsigned int Number,unsigned int Length)  //显
+             -示16进制数
+ 110          {
+ 111   1        unsigned char i,singlenum;  //singlenum中间量，因为16进制大于9为abc
+ 112   1        lcd_setcursor(Line,Column);
+ 113   1        for(i=Length;i>0;i--)
+C51 COMPILER V9.59.0.0   LCD1602                                                           07/09/2024 06:29:40 PAGE 3   
+
+ 114   1        {
+ 115   2        singlenum=Number/lcd_pow(16,i-1)%16;
+ 116   2        if(singlenum<10)
+ 117   2          lcd_writedat('0'+singlenum);
+ 118   2        else
+ 119   2          lcd_writedat('A'+singlenum-10); 
+ 120   2        //singlenum大于10，再加上0x41，超了10，所以减掉
+ 121   2        }
+ 122   1      }
+ 123          
+ 124          void lcd_showbinnum(unsigned char Line,unsigned char Column,unsigned int Number,unsigned int Length)  //显
+             -示2进制数
+ 125          {
+ 126   1          unsigned char i;
+ 127   1        lcd_setcursor(Line,Column);
+ 128   1        for(i=Length;i>0;i--)
+ 129   1          lcd_writedat('0'+Number/lcd_pow(2,i-1)%2);  //加0即加了0x30，因为实际数字和ASC码表的数字
+             -差0x30
+ 130   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    441    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      33
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

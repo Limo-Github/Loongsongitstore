@@ -1,0 +1,8 @@
+".\Objects\main.obj",
+".\Objects\lcd1602.obj",
+".\Objects\DHT11.obj",
+".\Objects\BH1750.obj",
+".\Objects\delay.obj" 
+TO ".\Objects\project" 
+PRINT(".\Listings\project.m51") RAMSIZE(256) 
+DISABLEWARNING (16) 
